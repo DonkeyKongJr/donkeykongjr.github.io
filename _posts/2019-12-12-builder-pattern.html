@@ -1,0 +1,231 @@
+---
+layout: post
+title: 'Builder Design Pattern!'
+subtitle: 'All you need to know about the Builder Design Pattern.'
+date: 2019-12-08 18:36:23 +0000
+categories: Software Development Design Pattern
+---
+
+<h1>Builder Design Pattern</h1>
+<p>
+  In today’s episode of <strong>Software Design Patterns</strong> you will learn
+  everything about the <strong>Builder Design Pattern</strong>. The Builder
+  Pattern is also pretty common and widely used. Different from the already
+  covered <strong>behavioral</strong> pattern
+  <a href="https://www.patrickschadler.com/observer-design-pattern/">Observer</a
+  >, the Builder Pattern is a creational design patterns like
+  <a href="https://www.patrickschadler.com/singleton-design-pattern/"
+    >Singleton</a
+  >
+  and
+  <a href="https://www.patrickschadler.com/factory-method-design-pattern/"
+    >Factory Method</a
+  >
+  pattern.
+</p>
+<p>
+  All the examples, source code and unit tests are in this
+  <a href="https://github.com/DonkeyKongJr/BuilderPattern">GitHub repository</a
+  >.
+</p>
+<h2>What’s the purpose of the Builder Design Pattern?</h2>
+<p>
+  The <strong>Gang-of-Four</strong> [1] reference book ("<em
+    >Design Patterns. Elements of Reusable Object-Oriented Software</em
+  >") describes the intent of the Builder Pattern as the following.
+</p>
+<blockquote>
+  <p>
+    Separate the construction of a complex object from its representation so
+    that the same construction process can create different representations.
+  </p>
+</blockquote>
+<p>
+  Basically you have a <strong>builder</strong> and a <strong>director</strong>.
+  In my example on
+  <a href="https://github.com/DonkeyKongJr/BuilderPattern">GitHub</a> I use
+  different types of houses. There is a builder for flat and hipped houses.
+  Those builders are created and passed to the director. The director itself
+  constructs the different houses. To retrieve the built house the actual
+  builder has a method for this (<em>GetHouse()</em>). Via this you can use the
+  concrete house implementation.
+</p>
+<h2>How does the Builder look like?</h2>
+<p>
+  In the picture below you find the Unified Modeling Language (UML) diagram.
+</p>
+<img
+  class="size-full wp-image-4815"
+  src="https://www.patrickschadler.com/wp-content/uploads/2019/10/Builder-Pattern-UML.png"
+  alt="Builder Pattern UML "
+  width="480"
+  height="232"
+/>
+
+<p>
+  In the linked
+  <a href="https://github.com/DonkeyKongJr/BuilderPattern">GitHub repository</a>
+  you will find interfaces for the <strong>IHouseBuilder</strong> and the
+  <strong>IDirector</strong>. Many resources advise you to use abstract base
+  classes for the director and the builder - which is totally fine. I simply
+  like interfaces more, so I went this route. The IHousebuilder interface
+  contains the definition for building the house and retrieving the build
+  instance. The <strong>IDirector</strong> simply has a construct method. In
+  this method all steps should be done to build a specific thing - in our case a
+  given type of house. The <strong>House</strong> class stores the model of a
+  house. To make it simple I minimized the house to four property with getter
+  only. To set value, you have to use the constructor when creating a house.
+</p>
+<pre class="font-size:14 lang:c# decode:true " title="IHouseBuilder.cs">
+public interface IHouseBuilder
+{
+	void BuildHouse();
+	House GetHouse();
+}</pre
+>
+<pre class="font-size:14 lang:c# decode:true " title="IDriector.cs">
+public interface IDirector
+{
+	void Construct();
+}</pre
+>
+<pre class="font-size:14 lang:c# decode:true  " title="House.cs">
+public class House
+{
+	public string PaintingColor { get; }
+	public string RoofType { get; }
+	public int NumbersOfFloors { get; }
+	public bool HasCellar { get; }
+
+	public House(string paintingColor, string roofType, int numbersOfFloors, bool hasCellar)
+	{
+		PaintingColor = paintingColor;
+		RoofType = roofType;
+		NumbersOfFloors = numbersOfFloors;
+		HasCellar = hasCellar;
+	}
+}</pre
+>
+<p>
+  The concrete house builders sets the correspondending values when creating a
+  new instance.
+</p>
+<pre class="font-size:14 lang:c# decode:true  " title="FlatRoofHouseBuilder.cs">
+public class FlatRoofHouseBuilder : IHouseBuilder
+{
+	private House _house = default(House);
+
+	public void BuildHouse()
+	{
+		_house = new House("white", "flat", 1, false);
+	}
+
+	public House GetHouse()
+	{
+		return _house;
+	}
+}</pre
+>
+<pre
+  class="font-size:14 lang:c# decode:true  "
+  title="HippedRoofHouseBuilder.cs"
+>
+public class HippedRoofHouseBuilder : IHouseBuilder
+{
+	private House _house = default(House);
+
+	public void BuildHouse()
+	{
+		_house = new House("gray", "hipped", 2, true);
+	}
+
+	public House GetHouse()
+	{
+		return _house;
+	}
+}</pre
+>
+<p>
+  The construct method on the director initiates the build process for the given
+  house builder.
+</p>
+<pre class="font-size:14 lang:c# decode:true  " title="HouseBuildDirector.cs">
+public class HouseBuildDirector : IDirector
+{
+	private readonly IHouseBuilder _houseBuilder;
+
+	public HouseBuildDirector(IHouseBuilder houseBuilder)
+	{
+		_houseBuilder = houseBuilder;
+	}
+
+	public void Construct()
+	{
+		_houseBuilder.BuildHouse();
+	}
+}</pre
+>
+<p>
+  In the unit tests you see the whole process of how to use the builder pattern.
+  In this case it seems pretty odd to use such a pattern, but imagine that the
+  complete build/construct process takes many complex steps.
+</p>
+<pre class="font-size:14 lang:c# decode:true  " title="BuilderPatternTest.cs">
+public class BuilderPatternTest
+{
+	[Fact]
+	public void ShouldBuildFlatHouse()
+	{
+		var flatHouseBuilder = new FlatRoofHouseBuilder();
+		var houseBuildDirector = new HouseBuildDirector(flatHouseBuilder);
+
+		houseBuildDirector.Construct();
+
+		var house = flatHouseBuilder.GetHouse();
+
+		house.HasCellar.Should().BeFalse();
+		house.PaintingColor.Should().Be("white");
+		house.RoofType.Should().Be("flat");
+		house.NumbersOfFloors.Should().Be(1);
+	}
+
+	[Fact]
+	public void ShouldBuildHippedHouse()
+	{
+		var hippedRoofHouseBuilder = new HippedRoofHouseBuilder();
+		var houseBuildDirector = new HouseBuildDirector(hippedRoofHouseBuilder);
+
+		houseBuildDirector.Construct();
+
+		var house = hippedRoofHouseBuilder.GetHouse();
+
+		house.HasCellar.Should().BeTrue();
+		house.PaintingColor.Should().Be("gray");
+		house.RoofType.Should().Be("hipped");
+		house.NumbersOfFloors.Should().Be(2);
+	}
+}</pre
+>
+<p>
+  Appendix: There are many ways of describing the builder pattern. Often it's
+  mistaken by a fluent library where you chain different methods and eventually
+  build an object from it. Let me know in the comments below how you find the
+  builder or how you learned it.
+</p>
+<p>
+  In the test project you'll find test cases for subscribing, notifying and
+  unsubscribing from observers.
+</p>
+<p>If you have any questions or comments feel free to leave them below.</p>
+<p>That’s it. Happy coding as always :).</p>
+<p><strong>References</strong></p>
+<p>
+  [1] –<a href="https://en.wikipedia.org/wiki/Design_pattern">Design patterns</a
+  >,
+  <a href="https://en.wikipedia.org/wiki/Software_engineering"
+    >software engineering</a
+  >,
+  <a href="https://en.wikipedia.org/wiki/Object-oriented_programming"
+    >object-oriented programming</a
+  >
+</p>
