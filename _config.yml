@@ -8,7 +8,7 @@
 # For technical reasons, this file is *NOT* reloaded automatically when you use
 # 'bundle exec jekyll serve'. If you change this file, please restart the server process.
 #
-# If you need help with YAML syntax, here are some quick references for you: 
+# If you need help with YAML syntax, here are some quick references for you:
 # https://learn-the-web.algonquindesign.ca/topics/markdown-yaml-cheat-sheet/#yaml
 # https://learnxinyminutes.com/docs/yaml/
 #
@@ -18,22 +18,26 @@
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
 
-title: Schadler Solutions 
+title: Schadler Solutions
 email: patrick.schadler@gmail.com
 description: >- # this means to ignore newlines until "baseurl:"
-  On this page you will find any posts and articles related to Software Development, 
+  On this page you will find  posts and articles related to Software Development, 
   Engineering, Craftmanship and all tech related stuff which comes in my mind.
   Feel free to write me any ideas for improvement or just drop a hi.
-baseurl: "" # the subpath of your site, e.g. /blog
-url: "" # the base hostname & protocol for your site, e.g. http://example.com
+baseurl: '' # the subpath of your site, e.g. /blog
+url: 'https://schadler-solutions.at' # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: patzistar
-github_username:  DonkeyKongJr
+github_username: DonkeyKongJr
 
 # Build settings
-theme: minima
+markdown: kramdown
+paginate: 5
+paginate_path: '/posts/page:num/'
+theme: jekyll-theme-clean-blog
 plugins:
   - jekyll-feed
-
+  - jekyll-paginate
+  - jekyll-sitemap ## Uncomment this line to silently generate a sitemaps.org compliant sitemap for your Jekyll site
 # Exclude from processing.
 # The following items will not be processed, by default.
 # Any item listed under the `exclude:` key here will be automatically added to
