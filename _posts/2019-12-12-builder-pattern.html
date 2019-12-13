@@ -76,20 +76,25 @@ categories: Software Development Design Pattern
   house. To make it simple I minimized the house to four property with getter
   only. To set value, you have to use the constructor when creating a house.
 </p>
-<pre class="font-size:14 lang:c# decode:true " title="IHouseBuilder.cs">
-public interface IHouseBuilder
-{
-	void BuildHouse();
-	House GetHouse();
-}</pre
->
-<pre class="font-size:14 lang:c# decode:true " title="IDriector.cs">
-public interface IDirector
+
+
+{% highlight csharp %}
+public interface IHouseBuilder 
+{ 
+  void BuildHouse(); 
+  House GetHouse(); 
+} 
+{% endhighlight %}
+
+
+{% highlight csharp %} 
+public interface IDirector 
 {
 	void Construct();
-}</pre
->
-<pre class="font-size:14 lang:c# decode:true  " title="House.cs">
+}
+{% endhighlight %}
+
+{% highlight csharp %}
 public class House
 {
 	public string PaintingColor { get; }
@@ -104,13 +109,13 @@ public class House
 		NumbersOfFloors = numbersOfFloors;
 		HasCellar = hasCellar;
 	}
-}</pre
->
+}
+{% endhighlight  %}
 <p>
   The concrete house builders sets the correspondending values when creating a
   new instance.
 </p>
-<pre class="font-size:14 lang:c# decode:true  " title="FlatRoofHouseBuilder.cs">
+{% highlight csharp %}
 public class FlatRoofHouseBuilder : IHouseBuilder
 {
 	private House _house = default(House);
@@ -124,12 +129,10 @@ public class FlatRoofHouseBuilder : IHouseBuilder
 	{
 		return _house;
 	}
-}</pre
->
-<pre
-  class="font-size:14 lang:c# decode:true  "
-  title="HippedRoofHouseBuilder.cs"
->
+}
+{% endhighlight %}
+
+{% highlight csharp %}
 public class HippedRoofHouseBuilder : IHouseBuilder
 {
 	private House _house = default(House);
@@ -143,13 +146,14 @@ public class HippedRoofHouseBuilder : IHouseBuilder
 	{
 		return _house;
 	}
-}</pre
->
+}
+{% endhighlight %}
 <p>
   The construct method on the director initiates the build process for the given
   house builder.
 </p>
-<pre class="font-size:14 lang:c# decode:true  " title="HouseBuildDirector.cs">
+
+{% highlight csharp %}
 public class HouseBuildDirector : IDirector
 {
 	private readonly IHouseBuilder _houseBuilder;
@@ -163,14 +167,14 @@ public class HouseBuildDirector : IDirector
 	{
 		_houseBuilder.BuildHouse();
 	}
-}</pre
->
+}
+{% endhighlight %}
 <p>
   In the unit tests you see the whole process of how to use the builder pattern.
   In this case it seems pretty odd to use such a pattern, but imagine that the
   complete build/construct process takes many complex steps.
 </p>
-<pre class="font-size:14 lang:c# decode:true  " title="BuilderPatternTest.cs">
+{% highlight csharp %}
 public class BuilderPatternTest
 {
 	[Fact]
@@ -204,8 +208,7 @@ public class BuilderPatternTest
 		house.RoofType.Should().Be("hipped");
 		house.NumbersOfFloors.Should().Be(2);
 	}
-}</pre
->
+}{% endhighlight %}
 <p>
   Appendix: There are many ways of describing the builder pattern. Often it's
   mistaken by a fluent library where you chain different methods and eventually
