@@ -1,0 +1,215 @@
+---
+layout: post
+title: 'Factory Method Design Pattern'
+subtitle: 'All you need to know about the Factory Method Design Pattern.'
+date: 2019-12-13 20:45:13 +0100
+categories: Software Development Design Pattern
+background: '/img/posts/factory-method-pattern/UML.jpg'
+---
+
+<h1>Factory Method Design Pattern</h1>
+<p>
+  In today's episode of <strong>Software Design Patterns</strong> you will learn
+  everything about the <strong>Factory Method Design Pattern</strong>. The
+  Factory Method is a creational pattern. That means that the pattern has
+  something to do with object creation. There are different types of design
+  patterns. The other types are <strong>structural</strong> and
+  <strong>behavioral</strong>. Those types will have a dedicated blog post in
+  the future.
+</p>
+<p>
+  For reference - the last article covered the
+  <a href="https://www.patrickschadler.com/singleton-design-pattern/"
+    >Singleton Design Pattern</a
+  >
+  - which is also a creational pattern. All the examples, source code and unit
+  tests are in this
+  <a href="https://github.com/DonkeyKongJr/FactoryMethodPattern"
+    >GitHub repository</a
+  >.
+</p>
+<h2>What’s the purpose of the Factory Method Design Pattern?</h2>
+<p>
+  The Factory Method is a very common pattern, but strongly misused. I have seen
+  many examples where methods were named factory, but did something completely
+  different. The quote below - <em>taken from the Gang of Four</em> - is very
+  precise about the Factory Method.
+</p>
+<blockquote>
+  <p>
+    The Factory Method Design Pattern defines an interface for creating an
+    object, but let subclasses decide which class to instantiate. Factory Method
+    lets a class defer instantiation to subclasses. [1]
+  </p>
+</blockquote>
+<p>
+  Don't fall into the trap and use it for everything. If you are not sure about
+  when to use, you probably don't need it anyway.
+</p>
+<h2>How does the Factory Method looks like?</h2>
+<p>
+  In the picture below you find the Unified Modeling Language (UML) diagram.
+</p>
+<img
+  class="size-full"
+  src="/img/posts/factory-method-pattern/UML.jpg"
+  alt="Factory Method Design Pattern UML"
+  width="700"
+  
+/>
+Factory Method Design Pattern UML
+<p>
+  As mentioned at the beginning you find all the code examples in a working
+  project on
+  <a href="https://github.com/DonkeyKongJr/FactoryMethodPattern">GitHub</a>.
+</p>
+{% highlight csharp %}
+public interface ICar
+{
+	string GetName();
+	void Accelerate();
+	void Break();
+}
+
+public class ElectricCar : ICar
+{
+	public int Speed { get; private set; }
+
+	public string GetName()
+	{
+		return "Electric";
+	}
+
+	public void Accelerate()
+	{
+		Speed = Speed + 2;
+	}
+
+	public void Break()
+	{
+		if (Speed > 0)
+		{
+			Speed--;
+		}
+	}
+}
+
+public class PetrolCar : ICar
+{
+	public int Speed { get; private set; }
+
+	public string GetName()
+	{
+		return "Petrol";
+	}
+
+	public void Accelerate()
+	{
+		Speed++;
+	}
+
+	public void Break()
+	{
+		if (Speed > 0)
+		{
+			Speed--;
+		}
+	}
+}
+{% endhighlight %}
+<p>
+  In this example we have an interface <strong>ICar.cs</strong>, which provides
+  basic car operations like accelerate and break. In addition to that we have an
+  <strong>GetName()</strong> method, were the concrete implementation should
+  return the actual name of the car.
+</p>
+{% highlight csharp %}
+public class CarFactory
+{
+	public ICar CreateCar(string type)
+	{
+		if (string.Equals(type, "Petrol", StringComparison.OrdinalIgnoreCase))
+		{
+			return new PetrolCar();
+		}
+
+		if (string.Equals(type, "Electric", StringComparison.OrdinalIgnoreCase))
+		{
+			return new ElectricCar();
+		}
+
+		throw new NotSupportedException($"Car Type '{type}' is not supported");
+	}
+}
+{% endhighlight %}
+<p>
+  Our Factory, called <strong>CarFactory.cs</strong>, is responsible for
+  creating instances of concrete cars. We provide a dedicated
+  <strong>CreateCar(string type)</strong> method, where the desired type can be
+  passed as an argument. The method maps the type to a concrete implementation.
+  This can be done via multiple <strong>if</strong> clauses or a
+  <strong>switch statement</strong>. Anyway, if there is no matching type we
+  throw an <strong>NotSupportedException</strong> to make it clear that the
+  factory does not support the desired type.
+</p>
+<p>
+  To see the proper use of the <strong>CarFactory</strong> look into the test
+  project.
+</p>
+{% highlight csharp %}
+public class CarFactoryTest
+{
+	[Theory]
+	[InlineData("Electric")]
+	[InlineData("electric")]
+	[InlineData("eLeCtriC")]
+	public void ShouldCreateElectricCarInstance(string type)
+	{
+		var carFactory = new CarFactory();
+		var car = carFactory.CreateCar(type);
+
+		car.Should().BeOfType<ElectricCar>();
+		car.GetName().Should().Be("Electric");
+	}
+
+	[Theory]
+	[InlineData("Petrol")]
+	[InlineData("petrol")]
+	[InlineData("pEtRoL")]
+	public void ShouldCreatePetrolCarInstance(string type)
+	{
+		var carFactory = new CarFactory();
+		var car = carFactory.CreateCar(type);
+
+		car.Should().BeOfType<PetrolCar>();
+		car.GetName().Should().Be("Petrol");
+	}
+
+	[Theory]
+	[InlineData("hans")]
+	[InlineData("car")]
+	[InlineData("electricpetrol")]
+	public void ShouldThrowNotSupportedExceptionWhenTypeIsInvalid(string type)
+	{
+		var carFactory = new CarFactory();
+		Action getCar = () => carFactory.CreateCar(type);
+
+		getCar.Should().ThrowExactly<NotSupportedException>();
+	}
+}
+{% endhighlight %}
+<p>If you have any questions or comments feel free to leave them below.</p>
+<p>That’s it. Happy coding as always :).</p>
+<p>
+  <strong><em>References</em></strong>
+</p>
+<p>
+  [1] -<a href="https://en.wikipedia.org/wiki/Design_pattern">Design patterns</a
+  >,
+  <a href="https://en.wikipedia.org/wiki/Software_engineering"
+    >software engineering</a
+  >,
+  <a href="https://en.wikipedia.org/wiki/Object-oriented_programming"
+    >object-oriented programming</a
+  >
+</p>

@@ -1,0 +1,292 @@
+---
+layout: post
+title: 'Observer Design Pattern'
+subtitle: 'All you need to know about the Observer Design Pattern.'
+date: 2019-12-14 10:30:23 +0100
+categories: Software Development Design Pattern
+background: '/img/posts/observer-pattern/UML.png'
+---
+
+<h1>Observer Design Pattern</h1>
+<p>
+  In today’s episode of <strong>Software Design Patterns</strong> you will learn
+  everything about the <strong>Observer Design Pattern</strong>. The Observer
+  Pattern is pretty common and widely used. Compared to the already covered
+  creational design patterns like
+  <a href="https://www.patrickschadler.com/singleton-design-pattern/"
+    >Singleton</a
+  >
+  and
+  <a href="https://www.patrickschadler.com/factory-method-design-pattern/"
+    >Factory Method</a
+  >
+  the Observer is a <strong>behavioral</strong> pattern.
+</p>
+<p>
+  All the examples, source code and unit tests are in this
+  <a href="https://github.com/DonkeyKongJr/ObserverPattern">GitHub repository</a
+  >.
+</p>
+<p>
+  This Blog post and the code example is strongly inspired by the
+  <a
+    href="https://docs.microsoft.com/en-us/dotnet/standard/events/observer-design-pattern"
+    >Microsoft's definition</a
+  >
+  and implementation.
+</p>
+<h2>What’s the purpose of the Observer Design Pattern?</h2>
+<p>
+  The <strong>Gang-of-Four</strong> [1] reference book ("<em
+    >Design Patterns. Elements of Reusable Object-Oriented Software</em
+  >") describes the intent of the Observer Pattern as the following.
+</p>
+<blockquote>
+  <p>
+    Define a one-to-many dependency between objects so that when one object
+    changes state, all its dependents are notified and updated automatically.
+  </p>
+</blockquote>
+<p>
+  Basically you have an <strong>observable</strong> object (also often named
+  <strong>subject</strong>) which holds a <strong>list of observers</strong>.
+  This observable notifies all observers when a state changes. This is archived
+  by calling one of their methods which is often called <em>Notify()</em> or
+  <em
+    ><a
+      href="https://docs.microsoft.com/en-us/dotnet/api/system.iobserver-1.onnext?view=netcore-3.0"
+      >OnNext()</a
+    ></em
+  >. In my example I have a list of newspaper which are subscribed to a news
+  agency - called news handler. After the news handler puts out new news every
+  subscribed newspaper will get notified. In addition to that every new
+  newspaper will receive all existing news as well. This behavior depends on the
+  use case - it could also be useful that you only want to receive brand-new
+  news and not old ones.
+</p>
+<h2>How does the Observer look like?</h2>
+<p>
+  In the picture below you find the Unified Modeling Language (UML) diagram.
+</p>
+<img
+  class="size-large "
+  src="/img/posts/observer-pattern/UML.png"
+  alt="Observer UML"
+  width="640"
+  height="260"
+/>
+Observer UML
+<p>
+  In the linked
+  <a href="https://github.com/DonkeyKongJr/ObserverPattern"
+    >GitHub repository</a
+  >
+  you will find the <strong>News</strong> class which represents the data model
+  for news.
+</p>
+
+{% highlight csharp %}
+public class News
+{
+	public int Id { get; set; }
+	public string Headline { get; set; }
+	public string Description { get; set; }
+
+	public override string ToString()
+	{
+		return string.Join(";", new[] { Id.ToString(), Headline, Description });
+	}
+}
+{% endhighlight %}
+<p>
+  The <strong>NewsPaper</strong> class implements the
+  <strong>IObserver</strong> interface, which provides all the structure for all
+  observers.
+</p>
+{% highlight csharp %}
+public class NewsPaper : IObserver
+{
+	public IList newsInfo = new List();
+
+	public string Name { get; }
+
+	private IDisposable cancellation;
+
+	public NewsPaper(string name)
+	{
+		if (String.IsNullOrEmpty(name))
+		{
+			throw new ArgumentNullException("The observer must be assigned a name.");
+		}
+
+		Name = name;
+	}
+
+	public void Subscribe(NewsHandler provider)
+	{
+		cancellation = provider.Subscribe(this);
+	}
+
+	public void Unsubscribe()
+	{
+		cancellation.Dispose();
+		newsInfo.Clear();
+	}
+
+	public void OnCompleted()
+	{
+		newsInfo.Clear();
+	}
+
+	public void OnError(Exception error)
+	{
+		throw new NotImplementedException();
+	}
+
+	public void OnNext(News value)
+	{
+		newsInfo.Add(value.ToString());
+	}
+}
+{% endhighlight %}
+<p>
+  The <strong>NewsHandler</strong> itself implements the
+  <strong>IObservable</strong> interface, which holds the design for the
+  observable.
+</p>
+{% highlight csharp %}
+public class NewsHandler : IObservable
+{
+	private readonly IList<IObserver> observers;
+	private readonly IList newsList;
+
+	public NewsHandler()
+	{
+		observers = new List<IObserver>();
+		newsList = new List();
+	}
+
+	public IDisposable Subscribe(IObserver observer)
+	{
+		if (!observers.Contains(observer))
+		{
+			observers.Add(observer);
+			// Provide observer with existing data.
+			foreach (var item in newsList)
+			{
+				observer.OnNext(item);
+			}
+		}
+		return new Unsubscriber(observers, observer);
+	}
+
+	public void PostNews(News newNews)
+	{
+		if (newNews.Id > 0 && !newsList.Contains(newNews))
+		{
+			newsList.Add(newNews);
+
+			foreach (var observer in observers)
+			{
+				observer.OnNext(newNews);
+			}
+		}
+	}
+}
+{% endhighlight %}
+<p>
+  Those
+  <a
+    href="https://docs.microsoft.com/en-us/dotnet/api/system.iobservable-1?view=netcore-3.0"
+    >interfaces</a
+  >
+  are from directly the <strong>System</strong> name space in .Net.
+</p>
+<p>
+  In the test project you'll find test cases for subscribing, notifying and
+  unsubscribing from observers.
+</p>
+{% highlight csharp %}
+public class ObserverPatternTest
+{
+	[Fact]
+	public void ShouldPublishToAllSubscribers()
+	{
+		var newsHandler = new NewsHandler();
+		var newsPaperOne = new NewsPaper("New York Times");
+		var newsPaperTwo = new NewsPaper("Washington Post");
+
+		var news = GenerateTestNews();
+
+		newsHandler.PostNews(news[0]);
+
+		newsPaperOne.Subscribe(newsHandler);
+
+		newsHandler.PostNews(news[1]);
+
+		newsPaperTwo.Subscribe(newsHandler);
+
+		newsHandler.PostNews(news[2]);
+
+		newsPaperOne.newsInfo.Count.Should().Be(3);
+		newsPaperTwo.newsInfo.Count.Should().Be(3);
+
+		newsPaperOne.newsInfo[0].Should().Be(news[0].ToString());
+		newsPaperOne.newsInfo[1].Should().Be(news[1].ToString());
+		newsPaperOne.newsInfo[2].Should().Be(news[2].ToString());
+
+		newsPaperTwo.newsInfo[0].Should().Be(news[0].ToString());
+		newsPaperTwo.newsInfo[1].Should().Be(news[1].ToString());
+		newsPaperTwo.newsInfo[2].Should().Be(news[2].ToString());
+	}
+
+	[Fact]
+	public void ShouldResetAllNewsWhenUnsubscribed()
+	{
+		var newsHandler = new NewsHandler();
+		var newsPaperOne = new NewsPaper("New York Times");
+		var news = GenerateTestNews();
+
+		news.ToList().ForEach(newsHandler.PostNews);
+
+		newsPaperOne.Subscribe(newsHandler);
+
+		newsPaperOne.newsInfo.Count.Should().Be(3);
+
+		newsPaperOne.Unsubscribe();
+
+		newsPaperOne.newsInfo.Should().BeEmpty();
+	}
+
+	private static IList GenerateTestNews()
+	{
+		var ids = 1;
+
+		return new Faker()
+		.StrictMode(true)
+		.RuleFor(n => n.Id, f => ids++)
+		.RuleFor(n => n.Headline, f => f.Lorem.Sentence())
+		.RuleFor(n => n.Description, f => f.Lorem.Paragraph())
+		.Generate(3);
+	}
+}
+{% endhighlight %}
+<p>
+  To make the tests more readable I am using
+  <a href="https://fluentassertions.com/">FluentAsserstions</a>. For generating
+  test content I highly recommend using
+  <a href="https://github.com/bchavez/Bogus">Bogus</a>.
+</p>
+<p>If you have any questions or comments feel free to leave them below.</p>
+<p>That’s it. Happy coding as always :).</p>
+<p><strong>References</strong></p>
+<p>
+  [1] –<a href="https://en.wikipedia.org/wiki/Design_pattern">Design patterns</a
+  >,
+  <a href="https://en.wikipedia.org/wiki/Software_engineering"
+    >software engineering</a
+  >,
+  <a href="https://en.wikipedia.org/wiki/Object-oriented_programming"
+    >object-oriented programming</a
+  >
+</p>
