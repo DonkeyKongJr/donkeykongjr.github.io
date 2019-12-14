@@ -29,6 +29,8 @@ url: 'https://schadler-solutions.at' # the base hostname & protocol for your sit
 twitter_username: patzistar
 github_username: DonkeyKongJr
 
+google_analytics: UA-28075278-4
+
 # Build settings
 markdown: kramdown
 highlighter: pygments
