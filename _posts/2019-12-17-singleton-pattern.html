@@ -1,0 +1,117 @@
+---
+layout: post
+title: 'Singleton Design Pattern'
+subtitle: 'All you need to know about the Singleton Design Pattern.'
+date: 2019-12-17 10:30:23 +0100
+categories: Software Development Design Pattern
+background: '/img/posts/singleton-pattern/UML.png'
+---
+
+<h1>Singleton Design Pattern</h1>
+<p>
+  With this post a brand-new series about Software Design Patterns starts. You
+  will learn everything about the most used Design Patterns. The first is
+  probably the most known. It is the Singleton Design Pattern. It is one of the
+  twenty-three well-known - and industry standard -
+  <a
+    href="https://www.amazon.de/Patterns-Elements-Reusable-Object-Oriented-Software/dp/0201633612"
+    ><em><strong>Gang of Four</strong></em></a
+  >
+  Design Pattern Collection.
+</p>
+<p>
+  All the examples, source code and unit tests are in this
+  <a href="https://github.com/DonkeyKongJr/SingletonDesignPattern"
+    >GitHub repository</a
+  >.
+</p>
+<h2>What's the purpose of the Singleton Design Pattern?</h2>
+<p>
+  In software development we often instantiate a class many times. This could be
+  problematic. As a result you have to deal with many instances of the very same
+  class. This introduces complexity and increases memory usage of the
+  application.
+</p>
+<p>
+  The Singleton Design Pattern solves this specific issue. It ensures that only
+  one instance of this class exists. Beyond that it standardizes and eases the
+  access to that instance. To access the instance a Singleton provides per
+  design a static `GetInstance()` method. To prevent any instantiating via the
+  new keyword you have to hide the constructor.
+</p>
+<h2>How does the Singleton Design Pattern looks like?</h2>
+<p>
+  In the picture below you find the Unified Modeling Language (UML) diagram.
+</p>
+<img
+  src="/img/posts/singleton-pattern/UML.png"
+  alt="Singleton UML Diagram"
+  width="400"
+/>
+Singleton UML Diagram
+<p>
+  The very basic implementation doesn't care about thread-safety. It's called
+  <a
+    href="https://github.com/DonkeyKongJr/SingletonDesignPattern/blob/master/src/BasicSingleton.cs"
+    >BasicSingleton</a
+  >
+  within the GitHub Repository.
+</p>
+{% highlight csharp %}
+public class BasicSingleton
+{
+    public string Name => "Singleton";
+    private static BasicSingleton instance;
+    
+    private BasicSingleton(){ }
+
+    public static BasicSingleton GetInstance()
+    {
+        if(instance == default(BasicSingleton)){
+                instance = new BasicSingleton();
+        }
+
+        return instance;
+    }
+}
+{% endhighlight %}
+<h2>How about Thread-Safety?</h2>
+<p>
+  This implementation could lead to problems when many threads calls the
+  <em>GetInstance() </em>simultaneously. For example the second thread enters
+  the if condition while the first isn't finished yet. Thus, a second instance
+  will be created. This behavior violates the Singleton Design Pattern
+  definition. The
+  <a
+    href="https://github.com/DonkeyKongJr/SingletonDesignPattern/blob/master/src/ThreadSafeSingleton.cs"
+    >ThreadSafeSingleton</a
+  >
+  prevents those race conditions with locking the access to a thread at a time.
+  This guarantees that only one instance will ever be created. Keep in mind that
+  every time we access the Singleton we perform a lock which uses a bit more
+  resources.
+</p>
+{% highlight csharp %}
+public class ThreadSafeSingleton
+{
+    public string Name => "Singleton";
+    private static ThreadSafeSingleton instance;
+    private static readonly object singletonlock = new object();  
+    
+    private ThreadSafeSingleton(){ }
+
+    public static ThreadSafeSingleton GetInstance()
+    {
+        lock (singletonlock)  
+        {  
+            if(instance == default(ThreadSafeSingleton))
+            {
+                instance = new ThreadSafeSingleton();
+            }
+
+            return instance;
+        }          
+    }
+}
+{% endhighlight %}
+<p>That’s it. Happy coding as always :).</p>
